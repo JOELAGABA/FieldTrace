@@ -1,1 +1,10 @@
  
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+Backend/.env
+Backend/app/.history/
+Backend/app/.vscode/PythonImportHelper-v2-Completion.json
+Frontend/node_modules/
+Frontend/dist/

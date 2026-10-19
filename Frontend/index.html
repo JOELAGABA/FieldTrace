@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080c1c" />
+    <meta name="description" content="FieldTrace soil and climate intelligence dashboard" />
+    <title>FieldTrace — YieldMesh</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./api.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <a class="brand" href="#dashboard" aria-label="FieldTrace dashboard">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M15.7 25.5V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M15.8 18.6C8.7 18.6 5.5 15 5.5 9.1c6.4 0 10.3 3.3 10.3 9.5Z" fill="currentColor" opacity=".7"/>
+              <path d="M15.8 14.9c0-6.1 3.9-9.4 10.7-9.4 0 6.1-3.6 9.4-10.7 9.4Z" fill="currentColor"/>
+              <path d="M11.8 25.5h7.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M23.1 18.6c1.2-.7 2.1-1.7 2.7-2.9M21.7 15.8c.7-.4 1.2-.9 1.5-1.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".75"/>
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <span class="brand-title">FieldTrace</span>
+            <span class="brand-subtitle">IoT Soil &amp; Climate Intelligence</span>
+          </span>
+        </a>
+        <span class="version-badge"><span>YieldMesh</span><strong>v1.2</strong></span>
+        <div class="header-actions">
+          <button class="header-button refresh-control" id="refresh-button" aria-label="Refresh data" title="Refresh data">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 9a6.5 6.5 0 0 1 10.8-2L20 12M4 12l3.1 5a6.5 6.5 0 0 0 10.8-2"/></svg>
+          </button>
+          <button class="header-button theme-control" id="theme-button" aria-label="Toggle light theme" title="Toggle theme">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.7"/><path d="M12 2v2m0 16v2m10-10h-2M4 12H2m17.1-7.1-1.4 1.4M6.3 17.7l-1.4 1.4m14.2 0-1.4-1.4M6.3 6.3 4.9 4.9"/></svg>
+          </button>
+          <button class="header-button add-control" id="add-node-button" aria-label="Add sensor node or deployment" title="Add sensor node or deployment">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <nav class="tab-bar" aria-label="Dashboard sections" role="tablist">
+        <button class="app-tab" id="tab-metrics" role="tab" aria-selected="false" tabindex="-1" aria-controls="metrics-view" data-tab="metrics">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="m7 15 4-4 3 2 5-6"/></svg><span>Dashboard &amp; Metrics</span>
+        </button>
+        <button class="app-tab" id="tab-map" role="tab" aria-selected="false" aria-controls="map-view" data-tab="map">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5.2-8 11-8 11S4 15.2 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Field Heatmap &amp; GIS</span>
+        </button>
+        <button class="app-tab" id="tab-hardware" role="tab" aria-selected="false" aria-controls="hardware-view" data-tab="hardware">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M9 2v5m6-5v5M9 17v5m6-5v5M2 9h5m-5 6h5m10-6h5m-5 6h5"/></svg><span>Hardware &amp; Deployments</span>
+        </button>
+        <button class="app-tab active" id="tab-feed" role="tab" aria-selected="true" aria-controls="feed-view" data-tab="feed">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-12-2 14"/></svg><span>Live JSON Feed</span><i class="tab-live-dot"></i>
+        </button>
+      </nav>
+
+      <div class="content-wrap">
+        <section class="welcome-row">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> FIELD INTELLIGENCE</div>
+            <h1>Field overview <span class="heading-separator">/</span> <span id="active-page-title">Dashboard &amp; Metrics</span></h1>
+            <p class="welcome-copy">Monitor conditions, connected sensor nodes, and field deployments.</p>
+          </div>
+          <label class="deployment-select-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5.2-8 11-8 11S4 15.2 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <select id="deployment-select" aria-label="Select a deployment"></select>
+            <span class="select-caret" aria-hidden="true">⌄</span>
+          </label>
+        </section>
+
+        <div class="data-notice" id="data-notice" role="status" hidden></div>
+        <div class="error-notice" id="error-notice" role="alert" hidden></div>
+
+        <section class="tab-view" id="metrics-view" role="tabpanel" aria-labelledby="tab-metrics" hidden>
+          <section class="metric-grid" aria-label="Current field conditions">
+            <article class="metric-card metric-temperature">
+              <div class="metric-heading"><span class="metric-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 7v9"/></svg></span><span class="metric-label">Air temperature</span><button class="metric-menu" type="button" data-metric="temperature" aria-label="Show air temperature trend">···</button></div>
+              <div class="metric-value" id="temperature-value">—<span>°C</span></div><div class="metric-foot"><span class="metric-dot"></span><span id="temperature-caption">Waiting for readings</span></div><div class="metric-sparkline spark-orange" id="temperature-sparkline" aria-hidden="true"></div>
+            </article>
+            <article class="metric-card metric-moisture">
+              <div class="metric-heading"><span class="metric-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5S5.5 11 5.5 15.3a6.5 6.5 0 0 0 13 0C18.5 11 12 3.5 12 3.5Z"/><path d="M9 16a3 3 0 0 0 3 3"/></svg></span><span class="metric-label">Soil moisture</span><button class="metric-menu" type="button" data-metric="soil_moisture" aria-label="Show soil moisture trend">···</button></div>
+              <div class="metric-value" id="moisture-value">—<span>%</span></div><div class="metric-foot"><span class="metric-dot"></span><span id="moisture-caption">Waiting for readings</span></div><div class="metric-sparkline spark-green" id="moisture-sparkline" aria-hidden="true"></div>
+            </article>
+            <article class="metric-card metric-humidity">
+              <div class="metric-heading"><span class="metric-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5S5.5 11 5.5 15.3a6.5 6.5 0 0 0 13 0C18.5 11 12 3.5 12 3.5Z"/><path d="m9 16 2-2 2 2 2-2"/></svg></span><span class="metric-label">Air humidity</span><button class="metric-menu" type="button" data-metric="humidity" aria-label="Show air humidity trend">···</button></div>
+              <div class="metric-value" id="humidity-value">—<span>%</span></div><div class="metric-foot"><span class="metric-dot"></span><span id="humidity-caption">Waiting for readings</span></div><div class="metric-sparkline spark-blue" id="humidity-sparkline" aria-hidden="true"></div>
+            </article>
+            <article class="metric-card metric-ph">
+              <div class="metric-heading"><span class="metric-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v7l-4 7a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-4-7V3M8 10h8M8 16h8"/></svg></span><span class="metric-label">Soil pH</span><button class="metric-menu" type="button" data-metric="soil_ph" aria-label="Show soil pH trend">···</button></div>
+              <div class="metric-value" id="ph-value">—<span>pH</span></div><div class="metric-foot"><span class="metric-dot"></span><span id="ph-caption">Waiting for readings</span></div><div class="metric-sparkline spark-purple" id="ph-sparkline" aria-hidden="true"></div>
+            </article>
+            <article class="metric-card metric-soil-temperature">
+              <div class="metric-heading"><span class="metric-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 14.8V5a3 3 0 0 0-6 0v9.8a5 5 0 1 0 6 0Z"/><path d="M11 7v9m5-8h3m-3 4h2"/></svg></span><span class="metric-label">Soil temperature</span><button class="metric-menu" type="button" data-metric="soil_temperature" aria-label="Show soil temperature trend">···</button></div>
+              <div class="metric-value" id="soil-temperature-value">—<span>°C</span></div><div class="metric-foot"><span class="metric-dot"></span><span id="soil-temperature-caption">Waiting for readings</span></div><div class="metric-sparkline spark-orange" id="soil-temperature-sparkline" aria-hidden="true"></div>
+            </article>
+          </section>
+
+          <article class="panel trends-panel" id="trends">
+            <div class="panel-heading"><div><div class="panel-kicker">FIELD CONDITIONS</div><h2>Environmental trends</h2></div>
+              <div class="chart-controls"><div class="segmented-control" role="group" aria-label="Chart metric">
+                <button class="segment active" data-metric="soil_moisture" aria-pressed="true">Soil moisture</button><button class="segment" data-metric="temperature" aria-pressed="false">Air temp.</button><button class="segment" data-metric="humidity" aria-pressed="false">Humidity</button><button class="segment" data-metric="soil_temperature" aria-pressed="false">Soil temp.</button><button class="segment" data-metric="soil_ph" aria-pressed="false">Soil pH</button>
+              </div></div>
+            </div>
+            <div class="chart-summary"><strong id="chart-current">—</strong><span id="chart-unit">%</span><span class="chart-summary-note">over the latest readings</span></div>
+            <div class="chart-legend"><span class="legend-mark"></span><span id="chart-legend-label">Soil moisture</span><span class="legend-period" id="chart-record-count">LATEST READINGS</span><button class="utility-button" id="export-csv-button">Export CSV</button></div>
+            <div class="chart-wrap"><svg class="trend-chart" id="trend-chart" viewBox="0 0 760 230" role="img" aria-label="Soil moisture trend chart"></svg></div>
+            <div class="chart-axis" id="chart-axis"></div>
+          </article>
+
+          <section class="panel readings-panel" id="sensor">
+            <div class="panel-heading readings-heading"><div><div class="panel-kicker">LATEST ACTIVITY</div><h2>Recent readings</h2></div><span class="table-footer-mark"><i></i> <span id="reading-count">Showing 0 readings</span></span></div>
+            <div class="table-scroll"><table><thead><tr><th>Recorded at</th><th>Air temp.</th><th>Soil temp.</th><th>Moisture</th><th>Humidity</th><th>Soil pH</th><th></th></tr></thead>
+              <tbody id="readings-body"><tr><td class="table-empty" colspan="7">No readings available yet.</td></tr></tbody></table></div>
+            <div class="table-footer"><span>Sensor readings for the selected deployment</span><span class="table-footer-mark"><i></i> Data updates when refreshed</span></div>
+          </section>
+        </section>
+
+        <section class="tab-view" id="map-view" role="tabpanel" aria-labelledby="tab-map" hidden>
+          <article class="panel field-panel" id="field">
+            <div class="panel-heading field-heading"><div><div class="panel-kicker" id="deployment-state-label">ACTIVE DEPLOYMENT</div><h2>Field location</h2></div><span class="live-pill" id="deployment-state-badge"><i></i> LIVE</span></div>
+            <div class="map-toolbar"><label>Variable<select id="heatmap-metric-select" aria-label="Heatmap variable"></select></label><div class="map-zoom-controls"><button class="map-zoom" id="map-zoom-out" aria-label="Zoom out">−</button><button class="map-zoom" id="map-zoom-in" aria-label="Zoom in">+</button><button class="map-zoom reset-zoom" id="map-zoom-reset" aria-label="Reset map zoom">Reset</button></div></div>
+            <div class="heatmap-canvas" id="field-map" tabindex="0" aria-label="Interactive GPS map. Drag to pan, use the mouse wheel or zoom buttons to zoom, and click or tap to select coordinates."><svg id="heatmap-svg" viewBox="0 0 900 480" role="img" aria-label="Field sensor heatmap"></svg><div class="heatmap-empty" id="heatmap-empty" hidden>Add GPS coordinates to deployments to display them on the heatmap.</div></div>
+            <div class="map-point-picker"><span id="map-selected-coordinate" aria-live="polite">Click or tap the map to choose a GPS point</span><button class="utility-button" id="use-map-coordinate-button" type="button" disabled>Use point for deployment</button></div>
+            <div class="heatmap-legend"><span id="heatmap-low-label">LOW</span><div class="heatmap-gradient"></div><span id="heatmap-high-label">HIGH</span><span class="heatmap-scope" id="heatmap-scope">Relative to sites with readings</span></div>
+            <div class="location-details"><div class="location-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5.2-8 11-8 11S4 15.2 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></div><div class="location-copy"><strong id="location-name">No deployment selected</strong><span id="location-started">Select a field to view its details</span></div></div>
+            <div class="field-divider"></div><div class="field-stats"><div><span class="stat-label">Sensor node</span><strong id="field-node">—</strong></div><div><span class="stat-label">Node status</span><strong class="node-status"><i></i><span id="field-status">—</span></strong></div></div>
+          </article>
+          <div class="map-info-grid"><article class="panel map-info-card"><span class="panel-kicker">DEPLOYMENT COORDINATES</span><strong id="map-coordinate-detail">—</strong><span>Latitude / longitude</span></article><article class="panel map-info-card"><span class="panel-kicker">FIELD SENSOR</span><strong id="map-node-detail">—</strong><span id="map-node-status">Waiting for node data</span></article></div>
+        </section>
+
+        <section class="tab-view" id="hardware-view" role="tabpanel" aria-labelledby="tab-hardware" hidden>
+          <section class="panel hardware-panel"><div class="panel-heading readings-heading"><div><div class="panel-kicker">CONNECTED DEVICES</div><h2>Sensor nodes</h2></div><span class="status-counter"><i></i><span id="hardware-node-count">0</span> nodes</span></div>
+            <div class="table-scroll"><table><thead><tr><th>Node</th><th>Device identifier</th><th>Status</th><th>Registered</th></tr></thead><tbody id="nodes-body"><tr><td class="table-empty" colspan="4">No sensor nodes found.</td></tr></tbody></table></div></section>
+          <section class="panel hardware-panel deployments-panel"><div class="panel-heading readings-heading"><div><div class="panel-kicker">FIELD LOCATIONS</div><h2>Deployments</h2></div><span class="status-counter"><i></i><span id="deployment-count">0</span> deployments</span></div>
+            <div class="table-scroll"><table><thead><tr><th>Location</th><th>Sensor</th><th>Started</th><th>State</th></tr></thead><tbody id="deployments-body"><tr><td class="table-empty" colspan="4">No deployments found.</td></tr></tbody></table></div></section>
+        </section>
+
+        <section class="tab-view active" id="feed-view" role="tabpanel" aria-labelledby="tab-feed">
+          <article class="panel feed-panel"><div class="panel-heading feed-heading"><div><div class="panel-kicker">DEVICE TELEMETRY</div><h2>Live JSON Feed</h2><p>Latest sensor payload from the selected field deployment.</p></div><div class="feed-actions"><span class="feed-status"><i></i> <span id="feed-state">LIVE</span></span><button class="utility-button" id="copy-json-button">Copy JSON</button></div></div>
+            <div class="feed-meta"><span><i></i> NODE <strong id="feed-node">—</strong></span><span>DEPLOYMENT <strong id="feed-deployment">—</strong></span><span id="feed-timestamp">Waiting for data</span></div>
+            <pre class="json-viewer" aria-label="Latest sensor JSON"><code id="live-json">{}</code></pre>
+            <div class="feed-footer"><span class="json-indicator">{ }</span><span>Payload preview <strong>application/json</strong></span><span id="feed-reading-count">0 records</span><button class="utility-button" id="download-json-button">Download JSON</button></div>
+          </article>
+        </section>
+
+        <footer class="page-footer"><span>FieldTrace <span class="footer-separator">·</span> YieldMesh v1.2</span><span id="last-updated">Not synced yet</span></footer>
+      </div>
+    </main>
+    <dialog class="manage-dialog" id="manage-dialog" aria-labelledby="manage-title">
+      <form class="manage-form" id="manage-form">
+        <div class="dialog-heading"><div><div class="panel-kicker">FIELDTRACE SETUP</div><h2 id="manage-title">Add to your workspace</h2></div><button type="button" class="dialog-close" id="dialog-close" aria-label="Close dialog">×</button></div>
+        <label>What would you like to add?<select id="manage-type" name="type"><option value="node">Sensor node</option><option value="deployment">Field deployment</option></select></label>
+        <div class="form-fields" id="node-fields"><label>Node name<input name="node_name" required placeholder="e.g. NODE-003"/></label><label>Device identifier<input name="device_identifier" required placeholder="e.g. FT-UG-003"/></label><label>Status<select name="status"><option value="active">Active</option><option value="inactive">Inactive</option></select></label></div>
+        <div class="form-fields" id="deployment-fields" hidden><label>Sensor node<select name="sensor_id" id="deployment-sensor" required></select></label><label>Location name<input name="location_name" required placeholder="e.g. Wakiso Field A"/></label><div class="coordinate-fields"><label>Latitude<input name="latitude" type="number" step="any" min="-90" max="90" placeholder="0.3476"/></label><label>Longitude<input name="longitude" type="number" step="any" min="-180" max="180" placeholder="32.5825"/></label></div><label>Started at<input name="started_at" type="datetime-local" required/></label></div>
+        <div class="dialog-error" id="dialog-error" role="alert" hidden></div>
+        <div class="dialog-actions"><button type="button" class="secondary-action" id="dialog-cancel">Cancel</button><button type="submit" class="primary-action" id="dialog-submit">Create</button></div>
+      </form>
+    </dialog>
+  </body>
+</html>
