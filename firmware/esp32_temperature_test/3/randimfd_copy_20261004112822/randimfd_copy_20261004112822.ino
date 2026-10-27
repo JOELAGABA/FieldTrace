@@ -8,7 +8,7 @@ const char* ssid = "Liquid telecom";
 const char* password = "11223344";
 
 // FastAPI Server Endpoint (Updated to match your PC's actual local IP)
-const char* serverName = "http://192.168.1.133:8000/measurements";
+const char* serverName = "http://192.168.137.1:8000/measurements";
 
 // Hardware Pin Setup
 #define ONE_WIRE_BUS 4
